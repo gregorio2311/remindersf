@@ -3,6 +3,9 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -60,4 +63,52 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://reminders-aa9aa-default-rtdb.firebaseio.com',
     storageBucket: 'reminders-aa9aa.appspot.com',
   );
+}
+
+class MyApp extends StatelessWidget {
+  // Función para obtener los datos desde la API
+  Future<List<dynamic>> fetchData() async {
+    final response =
+        await http.get(Uri.parse('http://tu-direccion-de-api.com/api/data'));
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter App',
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Data from API'),
+        ),
+        body: FutureBuilder<List<dynamic>>(
+          future: fetchData(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return ListView.builder(
+                itemCount: snapshot.data.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(snapshot.data[index]['title']),
+                    subtitle: Text(snapshot.data[index]['description']),
+                  );
+                },
+              );
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text("${snapshot.error}"),
+              );
+            }
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          },
+        ),
+      ),
+    );
+  }
 }
